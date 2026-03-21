@@ -179,10 +179,19 @@ def extract_algorithmic_features(ticker: str, sector: str, company_news: str, se
         "rating_exp": "系统阻断", "light_status": "🟡 灰度风控", "light_color": "yellow"
     }
 
+prediction_cache = {}
+CACHE_EXPIRE_SECONDS = 3600
 
 @app.post("/api/predict")
 def predict_stock(req: PredictRequest):
     ticker = req.ticker.upper().strip()
+    cache_key = f"{ticker}_{req.market}"
+    current_time = time.time()
+    if cache_key in prediction_cache:
+        cached_data, timestamp = prediction_cache[cache_key]
+        if current_time - timestamp < CACHE_EXPIRE_SECONDS:
+            print(f"[Cache Hit] 返回 {ticker} 的缓存数据")
+            return cached_data
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=5)
@@ -245,7 +254,7 @@ def predict_stock(req: PredictRequest):
         last_close = float(df_price['Close'].iloc[-1])
         target_price = last_close * (1 + (pred_val / 100))
             
-        return {
+        final_result = {
             "status": "success",
             "data": {
                 "ticker": ticker,
@@ -264,6 +273,12 @@ def predict_stock(req: PredictRequest):
                 }
             }
         }
+
+        prediction_cache[cache_key] = (final_result, current_time)
+        print(f"[Cache Miss] {ticker} 重新计算完毕并存入缓存")
+        
+        return final_result
+        
     except Exception as e:
         import traceback
         traceback.print_exc()
