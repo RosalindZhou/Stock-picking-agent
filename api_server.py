@@ -124,7 +124,15 @@ def extract_algorithmic_features(ticker: str, sector: str, company_news: str, se
         }
 
     market_scope = "美国三大股指/特定ETF" if market == "US" else "中国A股与宏观政策面"
-    prompt = f"您是顶级的自动量化研报系统。标的: {ticker}, 市场: {market_scope}。动态: {company_news if company_news else '使用常识测算'}。请结合数据生成专业的评价结构。"
+    prompt = f"""您是顶级的自动量化研报系统。标的: {ticker}, 市场: {market_scope}。
+    最新动态输入: {company_news if company_news else '无最新动态'}。
+
+    【严格纪律要求】
+    1. 坚守事实：所有的分析、得分（如 sentiment, short_term, long_term）必须且只能基于上面提供的“最新动态输入”和该标的已知的客观基本面。
+    2. 拒绝捏造：绝不允许自行虚构任何财务数据、新闻事件或主观数字。如果没有足够的信息，必须给出保守的中性评分（如 0.0）并说明信息不足。
+    3. 绝对一致：你的推理逻辑必须像计算器一样严谨。面对相同的信息输入，你给出的各项评分必须保持恒定，不能有任何随机波动。
+    
+    请严格结合上述数据，生成专业的评价结构。"""
     
     for attempt in range(retries):
         try:
