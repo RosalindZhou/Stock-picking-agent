@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
+from google.genai import types
 
 try:
     from data_harvester import FINNHUB_API_KEY, GOOGLE_API_KEY
@@ -130,10 +131,8 @@ def extract_algorithmic_features(ticker: str, sector: str, company_news: str, se
             response = client.models.generate_content(
                 model='gemini-2.5-flash-lite',
                 contents=prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': ApiQuantFeatures
-                }
+                config=types.GenerateContentConfig(
+        temperature=0.0,)
             )
             
             data = json.loads(response.text)
