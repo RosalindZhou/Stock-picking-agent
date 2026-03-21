@@ -7,6 +7,7 @@ import yfinance as yf
 import re
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
@@ -27,6 +28,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def serve_index():
+    """
+    当用户访问根目录时，返回 index.html 网页
+    """
+    import os
+    # 检查当前目录下是否有 index.html 文件
+    if os.path.exists("index.html"):
+        return FileResponse("index.html")
+    # 如果没找到网页文件，就返回一个简单的 JSON 提示
+    return {"status": "running", "message": "OracleAgent API is live, but index.html is missing."}
+    
 client = None
 if GOOGLE_API_KEY and GOOGLE_API_KEY != "YOUR_GOOGLE_API_KEY":
     client = genai.Client(api_key=GOOGLE_API_KEY)
