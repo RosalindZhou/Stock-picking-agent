@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OracleAgent</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=Roboto+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #070913;
+            --primary: #6366f1;
+            /* Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --up-color: #34d399;
+            --down-color: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #0c0f20 0%, #030408 100%);
+        }
+
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.35;
+            animation: float 12s infinite ease-in-out alternate;
+        }
+
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: #6366f1;
+            top: -150px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: #c026d3;
+            bottom: -200px;
+            right: -150px;
+            animation-delay: -4s;
+        }
+
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #3b82f6;
+            top: 40%;
+            left: 40%;
+            animation-delay: -8s;
+            opacity: 0.2;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(60px) scale(1.15);
+            }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.2rem 3rem;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .brand .highlight {
+            color: #818cf8;
+            text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .control-panel {
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .control-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #818cf8, transparent);
+            opacity: 0.5;
+        }
+
+        .control-panel h2 {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Dual Market Selector */
+        .market-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .radio-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            user-select: none;
+            transition: 0.2s;
+        }
+
+        .radio-container:hover {
+            color: #fff;
+        }
+
+        .radio-container input {
+            cursor: pointer;
+            margin-right: 0.6rem;
+            transform: scale(1.3);
+            accent-color: var(--primary);
+        }
+
+        .input-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        #tickerInput {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            font-size: 1.3rem;
+            color: #fff;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-family: 'Roboto Mono', monospace;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #tickerInput:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .primary-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            max-width: max-content;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .primary-btn:hover {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        }
+
+        #loading {
+            text-align: center;
+            padding: 4rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        .loader {
+            width: 45px;
+            height: 45px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media(min-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1.8fr 1fr;
+            }
+        }
+
+        .panel {
+            padding: 2.5rem;
+        }
+
+        .header {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.8rem;
+        }
+
+        /* Data Panel & Charts */
+        .chart-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .echarts-container {
+            width: 100%;
+            height: 350px;
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Traffic Light Board */
+        .traffic-light-board {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .light-badge {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 0.8rem;
+            text-shadow: 0 0 15px currentColor;
+            transition: all 0.3s;
+        }
+
+        .light-explanation {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+        }
+
+        .light-green {
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.2);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+        }
+
+        .light-yellow {
+            color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.5);
+        }
+
+        .light-red {
+            color: #f87171;
+            box-shadow: 0 0 20px rgba(248, 113, 113, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.5);
+        }
+
+        .predict-box {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .ticker-box {
+            padding: 0.5rem 1.5rem;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: 'Outfit';
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .predict-value {
+            font-size: 4rem;
+            font-family: 'Outfit';
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .predict-value.up {
+            color: var(--up-color);
+            text-shadow: 0 0 30px rgba(52, 211, 153, 0.4);
+        }
+
+        .predict-value.down {
+            color: var(--down-color);
+            text-shadow: 0 0 30px rgba(248, 113, 113, 0.4);
+        }
+
+        .tech-factors {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .tf-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .tf-item span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .tf-item strong {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.3rem;
+            color: #e2e8f0;
+        }
+
+        .analysis-section {
+            margin-bottom: 2rem;
+        }
+
+        .analysis-section h3 {
+            font-size: 1rem;
+            font-family: 'Outfit';
+            color: #cbd5e1;
+            margin-bottom: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-left: 0.5rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .analysis-section p {
+            color: #f1f5f9;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .highlight-bg {
+            background: rgba(99, 102, 241, 0.05);
+            border-left: none;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            margin-bottom: 0;
+        }
+
+        .highlight-bg h3 {
+            color: #a5b4fc;
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .mt-4 {
+            margin-top: 1.5rem;
+        }
+
+        /* Confidence & Bullets */
+        .confidence-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .confidence-value {
+            color: #34d399;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .confidence-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #34d399);
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+        }
+
+        .bullet-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .bullet-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .bullet-item .icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: -2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-layer">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="brand">Oracle<span class="highlight">Agent</span></div>
+        <button id="langToggle" class="lang-btn">🇺🇸 English</button>
+    </nav>
+
+    <main class="container">
+        <!-- 控制引擎面板 -->
+        <div class="control-panel glass-card">
+            <h2 id="inputTitle">请选择想要预测走势的股票</h2>
+            <div class="market-toggle">
+                <label class="radio-container">
+                    <input type="radio" name="market" value="US" checked onchange="updatePlaceholder()">
+                    <span class="checkmark">美股</span>
+                </label>
+                <label class="radio-container">
+                    <input type="radio" name="market" value="CN" onchange="updatePlaceholder()">
+                    <span class="checkmark">A股</span>
+                </label>
+            </div>
+            <div class="input-form">
+                <input type="text" id="tickerInput" placeholder="请输入美股代码，如 NVDA" autocomplete="off" value="NVDA">
+                <button id="analyzeBtn" class="primary-btn pulse">执行系统联合推演</button>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden">
+            <div class="loader"></div>
+            <p id="loadingText">正在整理最新交易数据流与生成最新预测模型...</p>
+        </div>
+
+        <!-- 数据看盘展示 -->
+        <div id="dashboard" class="dashboard hidden">
+            <!-- 左侧：K线图与技术特征 -->
+            <div class="panel glass-card chart-panel">
+                <div class="header" id="titleChart">预测K线图</div>
+
+                <!-- 红绿灯指示牌 -->
+                <div class="traffic-light-board">
+                    <div class="light-badge light-yellow" id="trafficLight">🟡 运算接入中...</div>
+                    <div class="light-explanation" id="lightExplanation">等待神经网络反馈判定区间</div>
+                </div>
+
+                <div class="predict-box">
+                    <div class="ticker-box" id="tickerBadge">NVDA</div>
+                    <div class="predict-value" id="predValue">--%</div>
+                </div>
+
+                <!-- ECharts Canvas Container -->
+                <div id="klineChartBox" class="echarts-container"></div>
+
+                <div class="tech-factors mt-4">
+                    <div class="tf-item">
+                        <span id="lblVol">真实标的五日极差 (σ)</span><strong id="valVol">0.00</strong>
+                    </div>
+                    <div class="tf-item">
+                        <span id="lblTurn">相对异常流动性 (MA20)</span><strong id="valTurn">0.00</strong>
+                    </div>
+                    <div class="tf-item">
+                        <span id="lblRsi">RSI 动能平滑指数</span><strong id="valRsi">0.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：自然语言研报解析 -->
+            <div class="panel glass-card text-panel">
+                <div class="header" id="titleAnalysis">因子推演与量化评估</div>
+
+                <!-- 置信度进度条 -->
+                <div class="confidence-container">
+                    <div class="confidence-label">
+                        <span id="lblConf">综合可信度</span>
+                        <span id="valConfidence" class="confidence-value">--%</span>
+                    </div>
+                    <div class="confidence-bar-bg">
+                        <div class="confidence-bar-fill" id="barConfidence" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- 核心速览 (Bullet Points) -->
+                <div class="bullet-container" id="bulletPointsBox">
+                    <div class="bullet-item"><span class="icon">🟢</span> <span class="text"
+                            id="txtOpp">核心驱动力加载中...</span></div>
+                    <div class="bullet-item"><span class="icon">🔴</span> <span class="text"
+                            id="txtRisk">压制性风险加载中...</span></div>
+                    <div class="bullet-item"><span class="icon">🟡</span> <span class="text"
+                            id="txtWarn">前瞻观察锚点加载中...</span></div>
+                </div>
+
+                <div class="analysis-section">
+                    <h3 id="subSector">宏观流动性与产业共振</h3>
+                    <p id="txtSector">加载中...</p>
+                </div>
+
+                <div class="analysis-section mt-4">
+                    <h3 id="subCompany">底层微观结构异动</h3>
+                    <p id="txtCompany">加载中...</p>
+                </div>
+
+                <div class="analysis-section mt-4 highlight-bg">
+                    <h3 id="subHistory">同源事件历史回撤测算</h3>
+                    <p id="txtHistory">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function updatePlaceholder() {
+            const market = document.querySelector('input[name="market"]:checked').value;
+            const input = document.getElementById('tickerInput');
+            if (market === 'US') {
+                input.placeholder = "请输入美股代码，如 NVDA 或 TSLA";
+                input.value = "NVDA";
+            } else {
+                input.placeholder = "请输入A股代码，如 600519 或 300750";
+                input.value = "600519";
+            }
+        }
+
+        let isEn = false;
+        document.getElementById('langToggle').addEventListener('click', () => {
+            isEn = !isEn;
+            document.getElementById('langToggle').textContent = isEn ? "中文" : "English";
+            if (isEn) {
+                document.getElementById('inputTitle').textContent = "Model Parameter Configuration";
+                document.getElementById('analyzeBtn').textContent = "Execute Quant Process";
+                document.getElementById('titleChart').textContent = "Historical Path & Inference Target";
+            } else {
+                location.reload();
+            }
+        });
+
+        const myChart = echarts.init(document.getElementById('klineChartBox'));
+
+        document.getElementById('analyzeBtn').addEventListener('click', () => {
+            const ticker = document.getElementById('tickerInput').value.trim();
+            if (!ticker) return alert('必须输入标的代码');
+            const market = document.querySelector('input[name="market"]:checked').value;
+            fetchPrediction(ticker, market);
+        });
+
+        async function fetchPrediction(ticker, market) {
+            const dashboard = document.getElementById('dashboard');
+            const loading = document.getElementById('loading');
+            dashboard.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('http://localhost:8000/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticker: ticker, market: market })
+                });
+
+                if (!response.ok) {
+                    const errorJson = await response.json();
+                    throw new Error(errorJson.detail || 'Network Issue');
+                }
+
+                const resJson = await response.json();
+                const data = resJson.data;
+
+                document.getElementById('tickerBadge').textContent = data.ticker;
+
+                const rate = data.prediction_3d;
+                const predValElement = document.getElementById('predValue');
+                predValElement.textContent = (rate > 0 ? '+' : '') + rate.toFixed(2) + '%';
+                predValElement.classList.remove('up', 'down');
+                if (rate > 0) predValElement.classList.add('up');
+                else if (rate < 0) predValElement.classList.add('down');
+
+                // Traffic lights UI
+                const tlBadge = document.getElementById('trafficLight');
+                tlBadge.textContent = data.factors.light_status || '🟡 灰色系统预警';
+                tlBadge.className = 'light-badge light-' + (data.factors.light_color || 'yellow');
+                document.getElementById('lightExplanation').textContent = data.factors.rating_exp || "底层推演系统执行中途断联";
+
+                document.getElementById('txtSector').textContent = data.factors.sector_trend;
+                document.getElementById('txtCompany').textContent = data.factors.company_trend;
+                document.getElementById('txtHistory').textContent = data.factors.history;
+
+                // Bullet points
+                document.getElementById('txtOpp').textContent = data.factors.opp || "量化机会池无显著强动能标的";
+                document.getElementById('txtRisk').textContent = data.factors.risk || "系统暂未识别极端做空下修风险";
+                document.getElementById('txtWarn').textContent = data.factors.warn || "进入常规技术性震荡整理状态";
+
+                // Confidence Bar
+                const conf = data.factors.confidence || 40;
+                document.getElementById('valConfidence').textContent = conf + '%';
+                document.getElementById('barConfidence').style.width = conf + '%';
+                if (conf < 60) {
+                    document.getElementById('barConfidence').style.background = 'linear-gradient(90deg, #b91c1c, #f87171)';
+                    document.getElementById('valConfidence').style.color = '#f87171';
+                } else {
+                    document.getElementById('barConfidence').style.background = 'linear-gradient(90deg, #3b82f6, #34d399)';
+                    document.getElementById('valConfidence').style.color = '#34d399';
+                }
+
+                document.getElementById('valVol').textContent = data.technical.volatility_5d.toFixed(4);
+                document.getElementById('valTurn').textContent = data.technical.turnover_proxy.toFixed(2) + 'x';
+                document.getElementById('valRsi').textContent = data.technical.rsi_14.toFixed(2);
+
+                // --- Premium ECharts Rendering ---
+                const dates = data.kline.dates;
+                const paddedDates = dates.concat(['T+1', 'T+2', 'T+3 (Target)']);
+                const ohlc = data.kline.ohlc;
+                const lastClosePrice = data.kline.last_close;
+                const targetPrice = data.kline.target_price;
+                const isUp = rate > 0;
+
+                // Color Mapping: A-share (CN) Red is UP. US Market Green is UP.
+                const isCN = market === 'CN';
+                const upColor = isCN ? '#ef4444' : '#22c55e';
+                const downColor = isCN ? '#22c55e' : '#ef4444';
+                const targetColor = isUp ? upColor : downColor;
+
+                // Moving Average Calculation
+                function calculateMA(dayCount, dataList) {
+                    var result = [];
+                    for (var i = 0, len = dataList.length; i < len; i++) {
+                        if (i < dayCount - 1) {
+                            result.push('-');
+                            continue;
+                        }
+                        var sum = 0;
+                        for (var j = 0; j < dayCount; j++) {
+                            sum += dataList[i - j][1]; // index 1 is Close price in [Open, Close, Low, High]
+                        }
+                        result.push(+(sum / dayCount).toFixed(3));
+                    }
+                    return result;
+                }
+                const ma5 = calculateMA(5, ohlc);
+                const ma10 = calculateMA(10, ohlc);
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross', label: { backgroundColor: '#6b7280' } },
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        textStyle: { color: '#f8fafc' }
+                    },
+                    legend: {
+                        data: ['KLine', 'MA5', 'MA10', 'AI Target'],
+                        textStyle: { color: '#94a3b8' },
+                        top: 0
+                    },
+                    grid: { left: '2%', right: '5%', top: '12%', bottom: '10%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        data: paddedDates,
+                        axisLine: { lineStyle: { color: '#475569' } },
+                        axisLabel: { color: '#94a3b8', fontSize: 11 }
+                    },
+                    yAxis: {
+                        scale: true,
+                        axisLine: { lineStyle: { color: '#475569' } },
+                        splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } },
+                        axisLabel: { color: '#94a3b8' }
+                    },
+                    dataZoom: [
+                        { type: 'inside', start: 0, end: 100 },
+                        {
+                            show: true, type: 'slider', bottom: 0, height: 12,
+                            borderColor: 'transparent', backgroundColor: 'rgba(255,255,255,0.02)',
+                            fillerColor: 'rgba(99,102,241,0.2)', handleStyle: { color: '#818cf8' },
+                            textStyle: { color: 'transparent' }
+                        }
+                    ],
+                    series: [
+                        {
+                            type: 'candlestick',
+                            name: 'KLine',
+                            data: ohlc,
+                            itemStyle: {
+                                color: upColor,
+                                color0: downColor,
+                                borderColor: upColor,
+                                borderColor0: downColor
+                            },
+                        },
+                        {
+                            type: 'line', name: 'MA5', data: ma5, smooth: true,
+                            lineStyle: { color: '#eab308', width: 1.5, opacity: 0.8 }, itemStyle: { color: '#eab308' }, symbol: 'none'
+                        },
+                        {
+                            type: 'line', name: 'MA10', data: ma10, smooth: true,
+                            lineStyle: { color: '#3b82f6', width: 1.5, opacity: 0.8 }, itemStyle: { color: '#3b82f6' }, symbol: 'none'
+                        },
+                        {
+                            type: 'line',
+                            name: 'AI Target',
+                            data: dates.map((_, i) => i === dates.length - 1 ? lastClosePrice : null).concat([null, null, targetPrice]),
+                            connectNulls: true,
+                            showSymbol: true,
+                            symbol: 'circle',
+                            symbolSize: 8,
+                            itemStyle: { color: targetColor, shadowBlur: 10, shadowColor: targetColor },
+                            lineStyle: {
+                                color: targetColor,
+                                width: 2,
+                                type: 'dashed'
+                            },
+                            markPoint: {
+                                symbol: 'pin',
+                                symbolSize: 45,
+                                data: [
+                                    { coord: [paddedDates.length - 1, targetPrice], value: 'T+3', itemStyle: { color: targetColor } }
+                                ],
+                                label: { color: '#fff', fontSize: 10, fontWeight: 'bold' }
+                            }
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+
+                loading.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+
+                // 让 ECharts 在容器由隐藏变为可见后，重新计算真实宽度
+                setTimeout(() => { myChart.resize(); }, 50);
+
+            } catch (error) {
+                console.error('Error:', error);
+                loading.classList.add('hidden');
+                alert('API System Halt: ' + error.message);
+            }
+        }
+
+        // Auto resize Echarts
+        window.addEventListener('resize', () => { myChart.resize(); });
+    </script>
+</body>
+
+</html>
