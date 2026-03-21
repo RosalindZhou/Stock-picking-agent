@@ -20,6 +20,10 @@ except ImportError:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
 app = FastAPI(title="OracleAgent Data API")
+# 全局变量：存储缓存数据
+prediction_cache = {}
+# 缓存有效期：1 小时
+CACHE_EXPIRE_SECONDS = 3600
 
 app.add_middleware(
     CORSMiddleware,
@@ -185,24 +189,32 @@ CACHE_EXPIRE_SECONDS = 3600
 @app.post("/api/predict")
 def predict_stock(req: PredictRequest):
     ticker = req.ticker.upper().strip()
+    
+    # 1. 先查缓存
     cache_key = f"{ticker}_{req.market}"
     current_time = time.time()
     if cache_key in prediction_cache:
         cached_data, timestamp = prediction_cache[cache_key]
         if current_time - timestamp < CACHE_EXPIRE_SECONDS:
-            print(f"[Cache Hit] 返回 {ticker} 的缓存数据")
+            print(f"[Cache Hit] 返回 {ticker} 的有效缓存数据")
             return cached_data
+
     try:
+        # --- 原有的数据抓取和计算逻辑 ---
         end_date = datetime.now()
         start_date = end_date - timedelta(days=5)
-        
         sector = SECTOR_MAP.get(ticker, "SPY") if req.market == "US" else "中证A500/沪深300"
         
-        # 极简同步流
         company_news = fetch_top_news(ticker, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), limit=1, market=req.market)
-        sector_news = "" # 直接砍掉，大大提速，无需单独抓行业宏观
-            
+        sector_news = "" 
+        
         factors = extract_algorithmic_features(ticker, sector, company_news, sector_news, market=req.market)
+
+        # 2. 【核心校验】检查返回的是不是我们要的业务数据
+        # 检查大模型返回的 light_status 是否包含“故障”或“保护”字样，或者置信度是否为 0
+        if factors.get("confidence") == 0 or "故障" in factors.get("light_status", ""):
+            print(f"[API Error] {ticker} 模型返回异常，不进入缓存")
+            raise HTTPException(status_code=503, detail="AI Service temporary unavailable, please retry.")
         
         yf_ticker = ticker
         df_price = None
@@ -273,16 +285,21 @@ def predict_stock(req: PredictRequest):
                 }
             }
         }
-
+        
+        # 存入缓存
         prediction_cache[cache_key] = (final_result, current_time)
-        print(f"[Cache Miss] {ticker} 重新计算完毕并存入缓存")
+        print(f"[Cache Updated] {ticker} 成功获取数据并存入缓存")
         
         return final_result
         
+    except HTTPException as he:
+        # 如果是业务逻辑主动抛出的错误，直接往上传
+        raise he
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Core Quant Engine Halt: {str(e)}")
+        # 如果是系统奔溃，也不要存缓存
+        raise HTTPException(status_code=500, detail=f"Core Engine Error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
