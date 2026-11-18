@@ -9,8 +9,8 @@ class QuantFeatures(BaseModel):
     long_term: float = Field(description="长期基本面得分 (-1.0 到 1.0)")
     reason: str = Field(description="一句话核心逻辑")
 # 初始化大模型 (请替换真实 Key)
-GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "YOUR_GOOGLE_API_KEY")
-client = genai.Client(api_key=GOOGLE_API_KEY)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 
 def fetch_batch_news(ticker: str, limit: int = 5) -> str:
@@ -35,7 +35,7 @@ def fetch_batch_news(ticker: str, limit: int = 5) -> str:
 
 def extract_quant_features(news_text: str) -> dict:
     """生产级：强制大模型使用 Pydantic Schema 输出 JSON 结构化参数"""
-    if not news_text:
+    if not news_text or client is None:
         return {"sentiment": 0.0, "short_term": 0.0, "long_term": 0.0, "reason": "无新闻"}
 
     prompt = f"你是量化分析师。阅读以下新闻，运用你的金融常识，给出一个综合情绪、短期冲击以及长期基本面的量化打分（区间 -1.0 到 1.0，支持浮点），并写出一句话核心逻辑。\n新闻：\n{news_text}"
@@ -66,3 +66,4 @@ if __name__ == "__main__":
     news = fetch_batch_news("AAPL")
     features = extract_quant_features(news)
     print(features)
+import os

@@ -7,3 +7,6 @@ yfinance
 google-genai
 akshare
 pydantic
+lightgbm
+scikit-learn
+streamlit
