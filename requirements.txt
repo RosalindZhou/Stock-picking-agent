@@ -10,3 +10,4 @@ pydantic
 lightgbm
 scikit-learn
 streamlit
+python-dotenv

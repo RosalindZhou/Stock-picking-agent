@@ -11,6 +11,8 @@ ENV/
 
 # 忽略存储了敏感真实 API Key 的环境文件
 .env
+.env.*
+!.env.example
 
 # 忽略本地生成的股票或测试数据/日志文件
 *.csv

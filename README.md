@@ -11,7 +11,7 @@ A stock-research prototype that combines market bars with structured news sentim
 
 ## Run locally
 
-Create and activate a Python virtual environment. Set `GOOGLE_API_KEY` for Gemini and `FINNHUB_API_KEY` for the Finnhub integration. Use your own credentials.
+Create and activate a Python virtual environment. Copy `.env.example` to an ignored local `.env` and set `GOOGLE_API_KEY` for Gemini and `FINNHUB_API_KEY` for Finnhub. Process environment variables take precedence.
 
 ```sh
 python -m pip install -r requirements.txt

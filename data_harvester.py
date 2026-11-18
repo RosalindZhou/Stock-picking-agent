@@ -8,25 +8,13 @@ from google import genai
 from google.genai import errors
 import json
 from pydantic import BaseModel, Field
+from settings import FINNHUB_API_KEY, GOOGLE_API_KEY
 
 class QuantFeatures(BaseModel):
     sentiment: float = Field(description="综合情绪得分 (-1.0 到 1.0)")
     short_term: float = Field(description="短期冲击得分 (-1.0 到 1.0)")
     long_term: float = Field(description="长期基本面得分 (-1.0 到 1.0)")
     reason: str = Field(description="一句话核心逻辑概述")
-
-# ================= Configuration =================
-# 安全读取本地 .env 保护密钥
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(env_path):
-    with open(env_path, "r", encoding="utf-8") as f:
-        for line in f:
-            if "=" in line and not line.strip().startswith("#"):
-                k, v = line.strip().split("=", 1)
-                os.environ[k] = v
-
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "YOUR_FINNHUB_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "YOUR_GOOGLE_API_KEY")
 
 SYMBOL = "600519"  # 演示沪深 300 标的 (A股)
 DAYS_TO_FETCH = 365
@@ -37,9 +25,7 @@ FINNHUB_RPM = 60
 GEMINI_RPM = 15  # Free tier is 15 requests per minute
 GEMINI_SLEEP_SEC = 60.0 / GEMINI_RPM + 0.5  # Add a slight buffer
 
-client = None
-if GOOGLE_API_KEY != "YOUR_GOOGLE_API_KEY":
-    client = genai.Client(api_key=GOOGLE_API_KEY)
+client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 
 def init_csv():
@@ -144,9 +130,8 @@ def extract_quant_features_with_retry(news_text: str, retries: int = 3) -> dict:
 
 
 def main():
-    if FINNHUB_API_KEY == "YOUR_FINNHUB_API_KEY" or GOOGLE_API_KEY == "YOUR_GOOGLE_API_KEY":
-        print("请注意：您正在使用默认的 API Key 占位符。请确保在环境变量中配置了 FINNHUB_API_KEY 和 GOOGLE_API_KEY。")
-        print("如果不配置真实 Key，抓取或打分将会失败。部分功能仍然可以运行演示。")
+    if not FINNHUB_API_KEY or not GOOGLE_API_KEY:
+        print("Configure FINNHUB_API_KEY and GOOGLE_API_KEY for live collection and scoring.")
 
     processed_ids = init_csv()
     print(f"已发现本地归档数据，共 {len(processed_ids)} 条已处理记录。支持断点续传。")

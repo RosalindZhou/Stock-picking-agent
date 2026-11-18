@@ -13,11 +13,7 @@ from pydantic import BaseModel
 from google import genai
 from google.genai import types
 
-try:
-    from data_harvester import FINNHUB_API_KEY, GOOGLE_API_KEY
-except ImportError:
-    FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+from settings import FINNHUB_API_KEY, GOOGLE_API_KEY
 
 app = FastAPI(title="OracleAgent Data API")
 # 全局变量：存储缓存数据
@@ -45,9 +41,7 @@ def serve_index():
     # 如果没找到网页文件，就返回一个简单的 JSON 提示
     return {"status": "running", "message": "OracleAgent API is live, but index.html is missing."}
     
-client = None
-if GOOGLE_API_KEY and GOOGLE_API_KEY != "YOUR_GOOGLE_API_KEY":
-    client = genai.Client(api_key=GOOGLE_API_KEY)
+client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 class PredictRequest(BaseModel):
     ticker: str
@@ -119,7 +113,7 @@ def extract_algorithmic_features(ticker: str, sector: str, company_news: str, se
     news_count = company_news.count("Title:")
     confidence = min(98, 55 + news_count * 15)
 
-    if not GOOGLE_API_KEY or GOOGLE_API_KEY == "YOUR_GOOGLE_API_KEY":
+    if client is None:
         return {
             "sentiment": 0.0, "short_term": 0.0, "long_term": 0.0, 
             "sector_trend": "未配置大模型密钥", "company_trend": "N/A", "history": "N/A",

@@ -2,14 +2,13 @@ import yfinance as yf
 from google import genai
 import json
 from pydantic import BaseModel, Field
+from settings import GOOGLE_API_KEY
 
 class QuantFeatures(BaseModel):
     sentiment: float = Field(description="综合情绪得分 (-1.0 到 1.0)")
     short_term: float = Field(description="短期冲击得分 (-1.0 到 1.0)")
     long_term: float = Field(description="长期基本面得分 (-1.0 到 1.0)")
     reason: str = Field(description="一句话核心逻辑")
-# 初始化大模型 (请替换真实 Key)
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 
@@ -66,4 +65,3 @@ if __name__ == "__main__":
     news = fetch_batch_news("AAPL")
     features = extract_quant_features(news)
     print(features)
-import os
