@@ -1,4 +1,4 @@
-# OracleAgent
+# Stock-picking-agent
 
 A stock-research prototype that combines market bars with structured news sentiment. The FastAPI demo presents market data and a short-horizon estimate. Separate Python scripts collect historical features and train experimental LightGBM models.
 
